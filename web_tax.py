@@ -28,14 +28,13 @@ def baixar_xml(session, chave):
         if r.status_code == 200:
             conteudo = r.text.strip()
             if "<nfeProc" in conteudo:
-                # Garante que o XML comece no caractere correto
                 xml_limpo = conteudo[conteudo.find("<"):]
                 return True, chave, xml_limpo.encode('utf-8')
     except: pass
     return False, chave, None
 
 # ==========================================
-# DESIGN PREMIUM (CLEAN & TRUST)
+# DESIGN PREMIUM (FORCE LIGHT MODE)
 # ==========================================
 st.set_page_config(page_title="Tax XML - Seu XML em Minutos", page_icon="🚀", layout="wide")
 
@@ -43,41 +42,66 @@ st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
     
-    .main { background-color: #fcfcfc; font-family: 'Poppins', sans-serif; }
+    /* FORÇAR MODO CLARO GLOBAL */
+    .stApp {
+        background-color: #f7f9fc !important;
+        color: #1c3d6a !important;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    /* Ajuste de Texto para Modo Claro */
+    h1, h2, h3, p, span, label {
+        color: #1c3d6a !important;
+    }
+
+    /* Header Branco */
+    .header {
+        background-color: white;
+        padding: 30px;
+        border-bottom: 4px solid #2da9e0;
+        text-align: center;
+        margin-bottom: 40px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
     
-    /* Header e Títulos */
-    h1, h2, h3 { color: #1c3d6a !important; font-weight: 700 !important; }
-    .stMarkdown p { color: #5a5a5a; font-size: 1.05rem; }
-    
-    /* Cards Brancos com Sombra Suave */
+    /* Cards Brancos com Sombra */
     div[data-testid="stVerticalBlock"] > div:has(div.stTextArea) {
         background-color: white !important;
-        padding: 30px !important;
+        padding: 35px !important;
         border-radius: 20px !important;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.04) !important;
-        border: 1px solid #f0f0f0 !important;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.06) !important;
+        border: 1px solid #eef2f6 !important;
     }
 
-    /* Botão Verde Profissional */
+    /* Área de Texto (Input) */
+    textarea {
+        background-color: #fcfcfc !important;
+        color: #1c3d6a !important;
+        border: 1px solid #d1d9e6 !important;
+    }
+
+    /* Botão Verde (Siga o padrão da Logo) */
     .stButton>button {
-        background: linear-gradient(135deg, #76bc43 0%, #5fa332 100%);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        height: 3.8rem;
-        font-weight: 700;
-        font-size: 18px;
-        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #76bc43 0%, #5fa332 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 12px !important;
+        height: 3.8rem !important;
+        font-weight: 700 !important;
+        font-size: 18px !important;
     }
-    .stButton>button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(118, 188, 67, 0.3); }
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(118, 188, 67, 0.3) !important;
+    }
 
-    /* Botão Flutuante WhatsApp */
+    /* WhatsApp Flutuante */
     .whatsapp-btn {
         position: fixed;
         bottom: 25px;
         right: 25px;
         background-color: #25d366;
-        color: white;
+        color: white !important;
         border-radius: 50px;
         padding: 12px 25px;
         font-weight: bold;
@@ -86,109 +110,104 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         display: flex;
         align-items: center;
-        gap: 10px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# WhatsApp Flutuante
+# Botão de Suporte
 st.markdown('<a href="https://wa.me/595984123456" class="whatsapp-btn">💬 Suporte Online</a>', unsafe_allow_html=True)
 
-# Cabeçalho com Logo do GitHub
-st.write("") # Espaçador
-col_logo, _ = st.columns([1, 4])
-with col_logo:
-    # Busca a imagem que você subiu no GitHub
-    try:
-        st.image("WhatsApp Image 2026-03-11 at 5.30.06 PM.jpeg", width=220)
-    except:
-        st.title("Tax XML") # Fallback caso a imagem mude de nome
-
-st.write("") 
+# Header com Logo
+st.markdown('<div class="header">', unsafe_allow_html=True)
+try:
+    st.image("WhatsApp Image 2026-03-11 at 5.30.06 PM.jpeg", width=250)
+except:
+    st.title("Tax XML")
+st.markdown('</div>', unsafe_allow_html=True)
 
 # Layout Principal
-col_left, col_right = st.columns([1.3, 1], gap="large")
+st.write("") 
+col_l, col_r = st.columns([1.3, 1], gap="large")
 
-with col_left:
-    st.markdown("### 📥 Entrada de Lote")
-    st.write("Insira as chaves de acesso para recuperação imediata.")
-    txt_input = st.text_area("", height=320, placeholder="Cole as chaves aqui...")
-    st.caption("🔒 Processamento criptografado via API Sefaz.")
+with col_l:
+    st.markdown("### 📥 1. Entrada de Lote")
+    st.write("Cole suas chaves de acesso abaixo para recuperar os arquivos.")
+    txt_input = st.text_area("", height=320, placeholder="Ex: 31250917155730000164550010000846641770615626")
+    st.caption("🔐 Processamento direto e seguro via API Sefaz.")
 
-with col_right:
-    st.markdown("### 💳 Pagamento e Liberação")
+with col_r:
+    st.markdown("### 💳 2. Checkout")
     if txt_input:
-        chaves_lote = [re.sub(r'[^0-9]', '', l) for l in txt_input.split('\n') if len(re.sub(r'[^0-9]', '', l)) == 44]
-        total_notas = len(chaves_lote)
-        preco_total = total_notas * PRECO_POR_XML
+        chaves_validas = [re.sub(r'[^0-9]', '', l) for l in txt_input.split('\n') if len(re.sub(r'[^0-9]', '', l)) == 44]
+        total_n = len(chaves_validas)
+        valor_n = total_n * PRECO_POR_XML
         
-        if total_notas > 0:
+        if total_n > 0:
             st.markdown(f"""
-                <div style="background-color: #eef9f1; padding: 20px; border-radius: 12px; border-left: 5px solid #76bc43;">
-                    <p style="margin:0; color: #1c3d6a;"><b>{total_notas} Notas Identificadas</b></p>
-                    <h2 style="margin:0; color: #1c3d6a;">R$ {preco_total:.2f}</h2>
+                <div style="background-color: #f0f7ff; padding: 25px; border-radius: 15px; border-left: 6px solid #2da9e0; margin-bottom: 20px;">
+                    <p style="margin:0; font-size: 14px; color: #1c3d6a;">Resumo do Pedido:</p>
+                    <h3 style="margin:0; color: #1c3d6a;">{total_n} Notas Fiscais</h3>
+                    <h2 style="margin:0; color: #2da9e0;">R$ {valor_n:.2f}</h2>
                 </div>
             """, unsafe_allow_html=True)
             
-            st.write("")
-            if st.button("GERAR PIX DE COBRANÇA"):
+            if st.button("GERAR PAGAMENTO PIX"):
                 with st.spinner("Conectando ao banco..."):
                     res = sdk.payment().create({
-                        "transaction_amount": float(preco_total),
-                        "description": f"Recuperação {total_notas} XMLs",
+                        "transaction_amount": float(valor_n),
+                        "description": f"Lote {total_n} XMLs",
                         "payment_method_id": "pix",
-                        "payer": {"email": "contato@taxxml.com", "first_name": "Matheus"}
+                        "payer": {"email": "contato@taxxml.com", "first_name": "Cliente"}
                     })["response"]
                     
-                    st.session_state['qr_base64'] = res["point_of_interaction"]["transaction_data"]["qr_code_base64"]
-                    st.session_state['pix_str'] = res["point_of_interaction"]["transaction_data"]["qr_code"]
-                    st.session_state['payment_id'] = res["id"]
-                    st.session_state['lista_final'] = chaves_lote
+                    st.session_state['qr_b64'] = res["point_of_interaction"]["transaction_data"]["qr_code_base64"]
+                    st.session_state['pix_val'] = res["point_of_interaction"]["transaction_data"]["qr_code"]
+                    st.session_state['mp_id'] = res["id"]
+                    st.session_state['lote_ch'] = chaves_validas
                     st.rerun()
         else:
-            st.warning("Aguardando chaves válidas de 44 dígitos.")
+            st.warning("Insira chaves válidas para prosseguir.")
     else:
-        st.write("O valor será calculado automaticamente após a inserção das chaves.")
+        st.info("Insira as chaves ao lado para calcular o valor.")
 
-# Checkout
-if 'qr_base64' in st.session_state:
+# Área de Checkout
+if 'qr_b64' in st.session_state:
     st.divider()
-    st.markdown("### 🚀 Concluir e Baixar")
+    st.markdown("### 🚀 3. Concluir e Baixar")
     c1, c2 = st.columns([1, 1.8])
     with c1:
-        st.image(f"data:image/png;base64,{st.session_state['qr_base64']}", width=280)
+        st.image(f"data:image/png;base64,{st.session_state['qr_b64']}", width=280)
     with c2:
-        st.write("Pague via Pix e clique no botão para processar o download.")
-        st.code(st.session_state['pix_str'], language="text")
+        st.write("Aponte a câmera do celular para o QR Code ou use o código abaixo:")
+        st.code(st.session_state['pix_val'], language="text")
         
         if st.button("VERIFICAR PAGAMENTO E BAIXAR"):
-            status_banco = sdk.payment().get(st.session_state['payment_id'])["response"]["status"]
-            if status_banco == "approved":
+            status_pg = sdk.payment().get(st.session_state['mp_id'])["response"]["status"]
+            if status_pg == "approved":
                 st.balloons()
-                st.success("Pagamento aprovado! Preparando arquivos...")
+                st.success("Pagamento aprovado!")
                 
-                zip_out = io.BytesIO()
-                sucessos_download = 0
+                zip_o = io.BytesIO()
+                sucesso_c = 0
                 
-                with zipfile.ZipFile(zip_out, "a", zipfile.ZIP_DEFLATED) as zf:
+                with zipfile.ZipFile(zip_o, "a", zipfile.ZIP_DEFLATED) as z_file:
                     with requests.Session() as session:
                         with ThreadPoolExecutor(max_workers=5) as executor:
-                            tarefas = {executor.submit(baixar_xml, session, c): c for c in st.session_state['lista_final']}
-                            for t in as_completed(tarefas):
-                                ok, ch, xml_data = t.result()
+                            jobs = {executor.submit(baixar_xml, session, c): c for c in st.session_state['lote_ch']}
+                            for j in as_completed(jobs):
+                                ok, ch, xml_d = j.result()
                                 if ok:
-                                    zf.writestr(f"{ch}.xml", xml_data)
-                                    sucessos_download += 1
+                                    z_file.writestr(f"{ch}.xml", xml_data=xml_d)
+                                    sucesso_c += 1
                 
-                if sucessos_download > 0:
+                if sucesso_c > 0:
                     st.download_button(
-                        label=f"⬇️ BAIXAR {sucessos_download} XMLs",
-                        data=zip_out.getvalue(),
+                        label=f"⬇️ BAIXAR {sucesso_c} ARQUIVOS XML",
+                        data=zip_o.getvalue(),
                         file_name=f"TaxXML_Lote.zip",
                         mime="application/zip"
                     )
             else:
-                st.info("Pagamento ainda pendente. Aguarde 10 segundos e tente de novo.")
+                st.error("Aguardando confirmação... (Pague o PIX e tente novamente em 5 segundos)")
 
-st.markdown("---")
-st.markdown("<p style='text-align: center; color: #8b949e; font-size: 0.8rem;'>Tax XML Pro © 2026 - Moraes Assessoria Internacional</p>", unsafe_allow_html=True)
+st.markdown("<br><br><p style='text-align: center; color: #a1a1a1; font-size: 0.8rem;'>Tax XML Pro © 2026 - Moraes Assessoria Internacional</p>", unsafe_allow_html=True)
