@@ -214,5 +214,6 @@ if 'qr_b64' in st.session_state:
             else:
                 st.error("Pagamento ainda pendente. Verifique seu aplicativo bancário.")
 
-st.markdown("<br><p style='text-align: center; color: #a1a1a1; font-size: 0.8rem;'>Tax XML Pro © 2026 - Moraes Assessoria Internacional</p>", unsafe_allow_html=True)
+st.markdown("<br><p style='text-align: center; color: #a1a1a1; font-size: 0.8rem;'>Tax XML Pro © 2026 </p>", unsafe_allow_html=True)
+
 
