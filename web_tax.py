@@ -4,173 +4,122 @@ import re
 import time
 import zipfile
 import io
-import mercadopago
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ==========================================
 # CONFIGURAÇÕES PRIVADAS
 # ==========================================
 API_KEY_MEU_DANFE = "36da320b-1b2d-47fa-b626-cc90dea64471"
-MP_ACCESS_TOKEN = "APP_USR-1091359635861022-031115-4083f4ba9bf7da16cf148d67c053efdb-3243990562"
-PRECO_POR_XML = 0.15 
-
-sdk = mercadopago.SDK(MP_ACCESS_TOKEN)
+# O Mercado Pago foi removido desta versão para facilitar seus testes de carga.
 
 # ==========================================
-# MOTOR DE DOWNLOAD (VELOCIDADE MACH 3)
+# MOTOR DE DOWNLOAD (REGRAS DE SEGURANÇA API)
 # ==========================================
-def baixar_xml(session, chave):
+def baixar_xml_seguro(session, chave):
     headers = {"Api-Key": API_KEY_MEU_DANFE, "Content-Type": "application/json"}
+    url_add = f"https://api.meudanfe.com.br/v2/fd/add/{chave}"
+    url_get = f"https://api.meudanfe.com.br/v2/fd/get/xml/{chave}"
+    
     try:
-        session.put(f"https://api.meudanfe.com.br/v2/fd/add/{chave}", headers=headers, timeout=12)
-        time.sleep(5) # Delay de segurança para a Sefaz liberar o arquivo
-        r = session.get(f"https://api.meudanfe.com.br/v2/fd/get/xml/{chave}", headers=headers, timeout=12)
-        if r.status_code == 200:
-            conteudo = r.text.strip()
-            if "<nfeProc" in conteudo:
-                xml_limpo = conteudo[conteudo.find("<"):]
-                return True, chave, xml_limpo.encode('utf-8')
+        # REGRA 1: Adiciona a nota na fila
+        session.put(url_add, headers=headers, timeout=12)
+        
+        # REGRA 2: Tentativas com descanso (Segurança contra bloqueio de IP)
+        for tentativa in range(3):
+            time.sleep(3) # Espera 3 segundos para a Sefaz processar
+            
+            r = session.get(url_get, headers=headers, timeout=12)
+            if r.status_code == 200:
+                conteudo = r.text.strip()
+                if not conteudo.startswith('{') and "<nfeProc" in conteudo:
+                    xml_limpo = conteudo[conteudo.find("<"):]
+                    return True, chave, xml_limpo.encode('utf-8')
+            elif r.status_code == 404:
+                return False, chave, "Não encontrada"
+                
     except: pass
-    return False, chave, None
+    return False, chave, "Falha"
 
 # ==========================================
-# DESIGN PREMIUM (ESTILO CLEAN / LIGHT MODE)
+# DESIGN PREMIUM (MODO CLARO FIXO)
 # ==========================================
-st.set_page_config(page_title="Tax XML - Seu XML em Minutos", page_icon="🚀", layout="wide")
+st.set_page_config(page_title="Tax XML Pro - MODO TESTE", page_icon="🧪", layout="wide")
 
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-    
     .stApp { background-color: #f7f9fc !important; color: #1c3d6a !important; font-family: 'Poppins', sans-serif; }
     h1, h2, h3, p, span, label { color: #1c3d6a !important; }
-
-    .header {
-        background-color: white;
-        padding: 30px;
-        border-bottom: 4px solid #2da9e0;
-        text-align: center;
-        margin-bottom: 40px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    }
-    
-    div[data-testid="stVerticalBlock"] > div:has(div.stTextArea) {
-        background-color: white !important;
-        padding: 35px !important;
-        border-radius: 20px !important;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.06) !important;
-    }
-
-    .stButton>button {
-        background: linear-gradient(135deg, #76bc43 0%, #5fa332 100%) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        height: 3.8rem !important;
-        font-weight: 700 !important;
-    }
-    
-    /* Cor da barra de progresso */
-    .stProgress > div > div > div > div { background-color: #76bc43 !important; }
+    .header { background-color: white; padding: 30px; border-bottom: 4px solid #2da9e0; text-align: center; margin-bottom: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    div[data-testid="stVerticalBlock"] > div:has(div.stTextArea) { background-color: white !important; padding: 35px !important; border-radius: 20px !important; box-shadow: 0 10px 40px rgba(0,0,0,0.06) !important; }
+    .stButton>button { background: linear-gradient(135deg, #76bc43 0%, #5fa332 100%) !important; color: white !important; border-radius: 12px !important; height: 3.8rem !important; font-weight: 700 !important; }
+    .whatsapp-btn { position: fixed; bottom: 25px; right: 25px; background-color: #25d366; color: white !important; border-radius: 50px; padding: 12px 25px; font-weight: bold; text-decoration: none; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
     </style>
     """, unsafe_allow_html=True)
 
-# Header com Logo
+st.markdown('<a href="https://wa.me/595984123456" class="whatsapp-btn">💬 Suporte Online</a>', unsafe_allow_html=True)
+
 st.markdown('<div class="header">', unsafe_allow_html=True)
-try:
-    st.image("WhatsApp Image 2026-03-11 at 5.30.06 PM.jpeg", width=250)
-except:
-    st.title("Tax XML")
+try: st.image("WhatsApp Image 2026-03-11 at 5.30.06 PM.jpeg", width=250)
+except: st.title("Tax XML Pro")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Layout
+# Interface
 col_l, col_r = st.columns([1.3, 1], gap="large")
 
 with col_l:
-    st.markdown("### 📥 1. Entrada de Notas")
-    txt_input = st.text_area("Cole as chaves abaixo:", height=300, placeholder="44 dígitos...")
+    st.markdown("### 📥 Entrada de Lote (Teste)")
+    txt_input = st.text_area("Cole as chaves para teste de carga:", height=320, placeholder="Insira várias chaves aqui...")
 
 with col_r:
-    st.markdown("### 💳 2. Checkout")
+    st.markdown("### 📊 Status do Processamento")
     if txt_input:
-        chaves_v = [re.sub(r'[^0-9]', '', l) for l in txt_input.split('\n') if len(re.sub(r'[^0-9]', '', l)) == 44]
-        total_v = len(chaves_v)
-        valor_v = total_v * PRECO_POR_XML
+        chaves_t = [re.sub(r'[^0-9]', '', l) for l in txt_input.split('\n') if len(re.sub(r'[^0-9]', '', l)) == 44]
+        total_t = len(chaves_t)
         
-        if total_v > 0:
-            st.markdown(f"""
-                <div style="background-color: #f0f7ff; padding: 25px; border-radius: 15px; border-left: 6px solid #2da9e0;">
-                    <h3 style="margin:0;">{total_v} Notas Fiscais</h3>
-                    <h2 style="margin:0; color: #2da9e0;">R$ {valor_v:.2f}</h2>
-                </div>
-            """, unsafe_allow_html=True)
+        if total_t > 0:
+            st.info(f"🚀 **{total_t}** notas prontas para baixar.")
             
-            if st.button("GERAR PAGAMENTO PIX"):
-                res = sdk.payment().create({
-                    "transaction_amount": float(valor_v),
-                    "description": f"Recuperação {total_v} XMLs",
-                    "payment_method_id": "pix",
-                    "payer": {"email": "contato@taxxml.com", "first_name": "Matheus"}
-                })["response"]
-                
-                st.session_state['qr_64'] = res["point_of_interaction"]["transaction_data"]["qr_code_base64"]
-                st.session_state['pix_str'] = res["point_of_interaction"]["transaction_data"]["qr_code"]
-                st.session_state['pay_id'] = res["id"]
-                st.session_state['lote'] = chaves_v
-                st.rerun()
-
-# 3. Processamento e Download
-if 'qr_64' in st.session_state:
-    st.divider()
-    st.markdown("### 🚀 3. Status do Lote")
-    c1, c2 = st.columns([1, 1.8])
-    with c1:
-        st.image(f"data:image/png;base64,{st.session_state['qr_64']}", width=250)
-    with c2:
-        st.write("Aguardando pagamento...")
-        st.code(st.session_state['pix_str'])
-        
-        if st.button("VERIFICAR PAGAMENTO E INICIAR DOWNLOAD"):
-            status_api = sdk.payment().get(st.session_state['pay_id'])["response"]["status"]
-            if status_api == "approved":
-                st.balloons()
-                st.success("Pagamento confirmado! Iniciando motor Mach 3...")
-                
-                # --- BARRA DE PROGRESSO ---
-                progress_bar = st.progress(0)
-                status_text = st.empty()
+            if st.button("INICIAR DOWNLOAD AGORA"):
+                st.write("---")
+                prog_bar = st.progress(0)
+                prog_txt = st.empty()
                 
                 zip_o = io.BytesIO()
-                sucesso_n = 0
-                total_n = len(st.session_state['lote'])
+                sucesso_c = 0
                 
-                with zipfile.ZipFile(zip_o, "a", zipfile.ZIP_DEFLATED) as z_file:
+                with zipfile.ZipFile(zip_o, "a", zipfile.ZIP_DEFLATED) as zf:
                     with requests.Session() as session:
-                        with ThreadPoolExecutor(max_workers=5) as executor:
-                            jobs = {executor.submit(baixar_xml, session, c): c for c in st.session_state['lote']}
+                        # Respeitando o limite de segurança de 3 threads
+                        with ThreadPoolExecutor(max_workers=3) as executor:
+                            jobs = {executor.submit(baixar_xml_seguro, session, c): c for c in chaves_t}
                             
                             concluidos = 0
                             for j in as_completed(jobs):
                                 ok, ch, xml_d = j.result()
                                 concluidos += 1
-                                # Atualiza Barra e Texto
-                                progress_bar.progress(concluidos / total_n)
-                                status_text.write(f"🔄 **Processando:** {concluidos} de {total_n} notas...")
+                                
+                                prog_bar.progress(concluidos / total_t)
+                                prog_txt.markdown(f"**Progresso:** {concluidos}/{total_t} notas processadas...")
                                 
                                 if ok:
-                                    z_file.writestr(f"{ch}.xml", xml_d)
-                                    sucesso_n += 1
+                                    zf.writestr(f"{ch}.xml", xml_d)
+                                    sucesso_c += 1
                 
-                if sucesso_n > 0:
-                    status_text.markdown(f"✅ **Concluído!** {sucesso_n} notas recuperadas com sucesso.")
+                if sucesso_c > 0:
+                    st.balloons()
+                    st.success(f"✅ Download finalizado: {sucesso_c} notas recuperadas.")
                     st.download_button(
-                        label=f"⬇️ BAIXAR ARQUIVO .ZIP ({sucesso_n} notas)",
+                        label=f"⬇️ BAIXAR ARQUIVO .ZIP",
                         data=zip_o.getvalue(),
-                        file_name=f"TaxXML_Lote.zip",
+                        file_name=f"Teste_TaxXML.zip",
                         mime="application/zip"
                     )
-            else:
-                st.error("Aguardando confirmação do Pix. Tente em 5 segundos.")
+                else:
+                    st.error("Nenhuma nota foi recuperada. Verifique se as chaves são válidas e se há saldo na API.")
+        else:
+            st.warning("Aguardando chaves válidas.")
+    else:
+        st.info("Insira as chaves ao lado para testar o motor Mach 3.")
 
-st.markdown("<br><br><p style='text-align: center; color: #a1a1a1;'>Tax XML Pro © 2026</p>", unsafe_allow_html=True)
-
+st.markdown("<br><p style='text-align: center; color: #a1a1a1;'>Tax XML Pro © 2026 - Modo Desenvolvedor Ativado</p>", unsafe_allow_html=True)
