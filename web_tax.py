@@ -172,4 +172,5 @@ if 'qr_64' in st.session_state:
             else:
                 st.error("Aguardando confirmação do Pix. Tente em 5 segundos.")
 
-st.markdown("<br><br><p style='text-align: center; color: #a1a1a1;'>Tax XML Pro © 2026 - Moraes Assessoria Internacional</p>", unsafe_allow_html=True)
+st.markdown("<br><br><p style='text-align: center; color: #a1a1a1;'>Tax XML Pro © 2026</p>", unsafe_allow_html=True)
+
