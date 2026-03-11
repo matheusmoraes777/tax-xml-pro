@@ -11,9 +11,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # CONFIGURAÇÕES PRIVADAS (BACKEND)
 # ==========================================
 API_KEY_MEU_DANFE = "36da320b-1b2d-47fa-b626-cc90dea64471"
-# SUBSTITUA ABAIXO PELA SUA CHAVE APP_USR REAL
+# CHAVE DE PRODUÇÃO REAL
 MP_ACCESS_TOKEN = "APP_USR-1091359635861022-031115-4083f4ba9bf7da16cf148d67c053efdb-3243990562"
-PRECO_POR_XML = 0.1
+PRECO_POR_XML = 0.15 
 
 sdk = mercadopago.SDK(MP_ACCESS_TOKEN)
 
@@ -47,35 +47,46 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==========================================
-# MOTOR DE PROCESSAMENTO
+# MOTOR DE PROCESSAMENTO (VERSÃO BLINDADA)
 # ==========================================
 def processar_nota(session, chave):
     headers = {"Api-Key": API_KEY_MEU_DANFE, "Content-Type": "application/json"}
     try:
-        session.put(f"https://api.meudanfe.com.br/v2/fd/add/{chave}", headers=headers, timeout=10)
-        time.sleep(2)
-        r = session.get(f"https://api.meudanfe.com.br/v2/fd/get/xml/{chave}", headers=headers, timeout=10)
-        if r.status_code == 200 and "<nfeProc" in r.text:
-            return True, chave, r.text.strip()
+        # 1. Solicita a nota ao Meu Danfe (PUT)
+        session.put(f"https://api.meudanfe.com.br/v2/fd/add/{chave}", headers=headers, timeout=15)
+        
+        # 2. Aguarda 4 segundos (Tempo crucial para a Sefaz liberar o XML)
+        time.sleep(4) 
+        
+        # 3. Tenta o download (GET)
+        r = session.get(f"https://api.meudanfe.com.br/v2/fd/get/xml/{chave}", headers=headers, timeout=15)
+        
+        if r.status_code == 200:
+            conteudo = r.text.strip()
+            # Validação: Se não tiver a tag de nota fiscal, não salvamos para não corromper o ZIP
+            if "<nfeProc" in conteudo and "</nfeProc>" in conteudo:
+                return True, chave, conteudo
+                
+        return False, chave, "Falha no XML"
     except:
-        pass
-    return False, chave, None
+        return False, chave, "Erro de Conexão"
 
 # ==========================================
 # INTERFACE
 # ==========================================
 st.title("⚡ Tax XML Pro")
-st.markdown("Plataforma de Recuperação de XMLs")
+st.markdown("Recupere seus XMLs de forma automática e segura.")
 st.divider()
 
 col1, col2 = st.columns([1.2, 1])
 
 with col1:
     st.markdown("<div class='card'><h3>1. Inserir Chaves</h3></div>", unsafe_allow_html=True)
-    txt_input = st.text_area("Cole as chaves de 44 dígitos aqui:", height=250)
+    txt_input = st.text_area("Cole aqui as chaves de 44 dígitos:", height=250, placeholder="Uma chave por linha...")
 
 with col2:
     if txt_input:
+        # Limpeza das chaves
         chaves = [re.sub(r'[^0-9]', '', l) for l in txt_input.split('\n') if len(re.sub(r'[^0-9]', '', l)) == 44]
         total = len(chaves)
         valor = total * PRECO_POR_XML
@@ -83,11 +94,11 @@ with col2:
         if total > 0:
             st.markdown(f"<div class='card'><h3>2. Resumo</h3><p>Notas: {total}<br><b>Total: R$ {valor:.2f}</b></p></div>", unsafe_allow_html=True)
 
-            if st.button("Gerar Pagamento PIX"):
-                with st.spinner("Criando ordem de pagamento..."):
+            if st.button("💳 Gerar PIX para Pagamento"):
+                with st.spinner("Conectando ao Banco..."):
                     payment_data = {
                         "transaction_amount": float(valor),
-                        "description": f"Lote {total} XMLs",
+                        "description": f"Lote {total} XMLs - TaxXML",
                         "payment_method_id": "pix",
                         "payer": {
                             "email": "contato@taxxml.com",
@@ -99,7 +110,6 @@ with col2:
                     resposta = sdk.payment().create(payment_data)
                     res = resposta["response"]
 
-                    # DIAGNÓSTICO DE ERRO
                     if "point_of_interaction" in res:
                         st.session_state['pix_qr'] = res["point_of_interaction"]["transaction_data"]["qr_code_base64"]
                         st.session_state['pix_copia'] = res["point_of_interaction"]["transaction_data"]["qr_code"]
@@ -107,41 +117,53 @@ with col2:
                         st.session_state['lista_chaves'] = chaves
                         st.rerun()
                     else:
-                        st.error("🚨 Erro na API do Mercado Pago")
-                        st.write("O banco retornou a seguinte mensagem:")
-                        st.json(res) # Mostra o motivo real do erro
+                        st.error("🚨 Erro ao gerar PIX")
+                        st.json(res)
         else:
-            st.warning("Aguardando chaves válidas...")
+            st.warning("Insira chaves válidas de 44 dígitos.")
 
-# ÁREA DE CHECKOUT
+# ÁREA DE PAGAMENTO E DOWNLOAD
 if 'pix_qr' in st.session_state:
     st.divider()
     c_pix1, c_pix2 = st.columns([1, 1.5])
     
     with c_pix1:
-        st.image(f"data:image/png;base64,{st.session_state['pix_qr']}", width=250)
+        st.image(f"data:image/png;base64,{st.session_state['pix_qr']}", caption="Aponte a câmera do celular", width=250)
     
     with c_pix2:
-        st.markdown("### 💳 Pagamento via PIX")
+        st.markdown("### 💸 Pagamento Identificado Automaticamente")
+        st.write("Após pagar, clique no botão abaixo para processar seus arquivos.")
         st.code(st.session_state['pix_copia'], language="text")
         
-        if st.button("🚀 Confirmar Pagamento e Baixar"):
+        if st.button("🚀 Verificar Pagamento e Baixar"):
             status_res = sdk.payment().get(st.session_state['pid'])
-            status = status_res["response"]["status"]
+            status = status_res["response"].get("status")
             
             if status == "approved":
                 st.balloons()
-                st.success("Pagamento aprovado!")
+                st.success("Pagamento Confirmado! Baixando notas...")
                 
                 zip_buffer = io.BytesIO()
+                sucessos = 0
+                
                 with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED) as zip_file:
                     with requests.Session() as session:
                         with ThreadPoolExecutor(max_workers=5) as executor:
                             futuros = {executor.submit(processar_nota, session, c): c for c in st.session_state['lista_chaves']}
                             for f in as_completed(futuros):
                                 ok, chave, xml = f.result()
-                                if ok: zip_file.writestr(f"{chave}.xml", xml)
+                                if ok:
+                                    zip_file.writestr(f"{chave}.xml", xml)
+                                    sucessos += 1
                 
-                st.download_button("⬇️ BAIXAR ARQUIVO .ZIP", zip_buffer.getvalue(), "TaxXML_Lote.zip", "application/zip")
+                if sucessos > 0:
+                    st.download_button(
+                        label=f"⬇️ BAIXAR {sucessos} XMLs (.ZIP)",
+                        data=zip_buffer.getvalue(),
+                        file_name=f"TaxXML_Lote.zip",
+                        mime="application/zip"
+                    )
+                else:
+                    st.error("As notas ainda não estão prontas na Sefaz. Tente baixar novamente em 1 minuto.")
             else:
-                st.error(f"Status: {status}. Pague o PIX e clique novamente.")
+                st.info(f"Pagamento ainda {status}. Se já pagou, aguarde alguns segundos.")
