@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # CONFIGURAÇÕES PRIVADAS (BACKEND)
 # ==========================================
 API_KEY_MEU_DANFE = "36da320b-1b2d-47fa-b626-cc90dea64471" # SUA CHAVE PRIVADA
-MP_ACCESS_TOKEN = "TEST-1091359635861022-031115-990d71ed2096e10f28627e53861e546c-3243990562"
+MP_ACCESS_TOKEN = "APP_USR-1091359635861022-031115-4083f4ba9bf7da16cf148d67c053efdb-3243990562"
 PRECO_POR_XML = 0.15  # Você pode ajustar seu lucro aqui
 
 sdk = mercadopago.SDK(MP_ACCESS_TOKEN)
@@ -174,4 +174,5 @@ if 'pix_qr' in st.session_state:
                 st.error("Pagamento ainda não identificado. Se você já pagou, aguarde 10 segundos e clique novamente.")
 
 # Footer
+
 st.markdown("<br><br><div style='text-align: center; color: #8b949e;'>© 2026 Tax XML Pro - Soluções em Inteligência Tributária</div>", unsafe_allow_html=True)
