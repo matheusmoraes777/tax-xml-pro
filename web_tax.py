@@ -74,7 +74,7 @@ with st.sidebar:
     
     # Botão de WhatsApp
     st.markdown("""
-        <a href="https://wa.me/595984123456" target="_blank">
+        <a href="https://wa.me/5551995759692" target="_blank">
             <button style="width:100%; border-radius:10px; border:none; background-color:#25D366; color:white; padding:10px; font-weight:bold; cursor:pointer;">
                 💬 Chamar no WhatsApp
             </button>
@@ -166,3 +166,4 @@ if 'qr' in st.session_state:
 # Rodapé
 st.markdown("---")
 st.markdown("<div style='text-align: center; color: #8b949e; font-size: 12px;'>Tax XML Pro © 2026 - Moraes Assessoria Internacional</div>", unsafe_allow_html=True)
+
