@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # ==========================================
 API_KEY_MEU_DANFE = "36da320b-1b2d-47fa-b626-cc90dea64471"
 MP_ACCESS_TOKEN = "APP_USR-1091359635861022-031115-4083f4ba9bf7da16cf148d67c053efdb-3243990562"
-PRECO_POR_XML = 0.15 
+PRECO_POR_XML = 0.08 
 
 sdk = mercadopago.SDK(MP_ACCESS_TOKEN)
 
@@ -215,3 +215,4 @@ if 'qr_b64' in st.session_state:
                 st.error("Pagamento ainda pendente. Verifique seu aplicativo bancário.")
 
 st.markdown("<br><p style='text-align: center; color: #a1a1a1; font-size: 0.8rem;'>Tax XML Pro © 2026 - Moraes Assessoria Internacional</p>", unsafe_allow_html=True)
+
